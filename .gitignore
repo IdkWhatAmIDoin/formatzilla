@@ -1,2 +1,4 @@
-/target # garbage build artifacts!
-/.idea  # garbage ide!
+target # garbage build artifacts!
+.idea  # garbage ide!
+**/.idea/
+**/target/
