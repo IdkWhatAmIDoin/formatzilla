@@ -1,0 +1,35 @@
+name: Mirror GitHub
+on:
+  push:
+    branches:
+      - main  # trigger on push to the main branch
+      - master
+
+jobs:
+  mirror:
+    runs-on: docker
+    steps:
+      - name: Clone repository
+        run: |
+          git clone https://185.68.244.71:443/$GITHUB_REPOSITORY.git .
+
+      - name: Get latest commit message and description
+        run: |
+          {
+            echo "FULL_MSG<<EOF"
+            git log -1 --pretty=%B
+            echo "EOF"
+          } >> "$GITHUB_ENV"
+
+      - name: Push to GitHub
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git config --global user.name "Forgejo Bot"
+          git config --global user.email "bot+not_a@real.person"
+          
+          REMOTE_REPO="https://x-access-token:${GH_PAT}@github.com/IdkWhatAmIDoin/agp.git"
+          
+          git add .
+          git commit -m "${{ env.FULL_MSG }} [skip ci]" -m "Beep boop - I am not a real person."
+          git push --mirror "$REMOTE_REPO"
