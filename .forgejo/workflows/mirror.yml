@@ -31,5 +31,5 @@ jobs:
           REMOTE_REPO="https://x-access-token:${GH_PAT}@github.com/IdkWhatAmIDoin/agp.git"
           
           git add .
-          git commit -m "${{ env.FULL_MSG }} [skip ci]" -m "Beep boop - I am not a real person."
+          git commit --allow-empty -m "${{ env.FULL_MSG }} [skip ci]" -m "Beep boop - I am not a real person."
           git push --mirror "$REMOTE_REPO"
