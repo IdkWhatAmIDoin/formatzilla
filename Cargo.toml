@@ -8,5 +8,6 @@ readme = "README.md"
 keywords = ["hashmap", "print", "debug", "utility", "agp"]
 categories = ["development-tools::debugging"]
 documentation = "https://docs.rs/agp/latest/agp/"
+repository = "https://github.com/IdkWhatAmIDoin/agp"
 
 [dependencies]
