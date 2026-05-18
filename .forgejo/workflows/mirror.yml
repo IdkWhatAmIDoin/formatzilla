@@ -23,7 +23,7 @@ jobs:
 
       - name: Push to GitHub
         env:
-          GH_PAT: ${{ secrets.GH_PAT }}
+          GH_PAT: ${{ secrets.AGP }}
         run: |
           git config --global user.name "Forgejo Bot"
           git config --global user.email "bot+not_a@real.person"
