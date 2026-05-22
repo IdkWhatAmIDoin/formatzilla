@@ -1,183 +1,73 @@
-// ignore this part
 use std::collections::HashMap;
 use std::fmt::Display;
-use std::fmt::Write;
-// ok now read
+use std::fmt;
 
-/// Actually good printing for maps and vectors.
-/// Ditch {:?}. {:#?} too.
-///
-/// # Examples
-///
-/// ```
-/// use std::collections::HashMap;
-/// use agp::ActualGoodPrinting;
-///
-/// let mut map = HashMap::new();
-/// map.insert("status", "ok");
-/// map.insert("code", "200");
-///
-/// map.agp();
-/// ```
-pub trait ActualGoodPrinting {
-    /// Prints the contents to standard output.
-    /// - For HashMaps: prints in the format `K: V`, line by line.
-    /// - For Vecs/arrays: prints in the format `N. item`, line by line (1-indexed).
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use std::collections::HashMap;
-    /// use agp::ActualGoodPrinting;
-    ///
-    /// let mut map = HashMap::new();
-    /// map.insert("status", "ok");
-    /// map.insert("code", "200");
-    ///
-    /// map.agp();
-    /// ```
+pub struct Zilla<'a, T: Formatzilla>(pub &'a T);
 
-    // todone AKA it's done: maybe add separate comments for vecs and standard arrays
-    fn agp(&self);
-    /// Returns a String containing the result.
-    /// - For HashMaps: returns in the format `K: V`, line by line.
-    /// - For Vecs/arrays: returns in the format `N. item`, line by line (1-indexed).
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use std::collections::HashMap;
-    /// use agp::ActualGoodPrinting;
-    ///
-    /// let mut map = HashMap::new();
-    /// map.insert("status", "ok");
-    /// map.insert("code", "200");
-    ///
-    /// let result = map.return_agp();
-    ///
-    /// assert!(result.contains("status: ok"));
-    /// assert!(result.contains("code: 200"));
-    /// ```
-    fn return_agp(&self) -> String;
+impl<'a, T: Formatzilla> Display for Zilla<'a, T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt_zilla(f)
+    }
 }
 
-impl<K, V> ActualGoodPrinting for HashMap<K, V>
+pub trait Formatzilla {
+    fn fmt_zilla(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result;
+
+    fn zilla(&self) where Self: Sized {
+        println!("{}", Zilla(self));
+    }
+}
+
+impl<K, V> Formatzilla for HashMap<K, V>
 where
-    K: Display,
+    K: Display + Ord,
     V: Display,
 {
-    fn agp(&self) {
-        for (k, v) in self {
-            println!("{k}: {v}");
-        }
-    }
+    fn fmt_zilla(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut pairs: Vec<_> = self.iter().collect();
+        pairs.sort_by_key(|(k, _)| k.to_string());
 
-    fn return_agp(&self) -> String {
-        let mut result = String::with_capacity(self.len() * 32);
-        for (k, v) in self {
-            writeln!(result, "{k}: {v}").unwrap();
+        let max_key_len = pairs.iter()
+            .map(|(k, _)| k.to_string().len())
+            .max()
+            .unwrap_or(0);
+
+        writeln!(f, "HashMap:")?;
+        for (k, v) in pairs {
+            let k_str = k.to_string();
+            let padding = max_key_len - k_str.len();
+            writeln!(f, "    {k_str}:{} {v},", " ".repeat(padding))?;
         }
-        result
+
+        Ok(())
     }
 }
 
-impl<T> ActualGoodPrinting for [T] // catches Vec and standard arrays
+impl<T> Formatzilla for [T]
 where
     T: Display,
 {
-    fn agp(&self) {
-        for (index, item) in self.iter().enumerate() {
-            println!("{}. {item}", index + 1);
+    fn fmt_zilla(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "[T]:")?;
+        for (i, v) in self.iter().enumerate() {
+            writeln!(f, "    {}. {v},", i + 1)?;
         }
-    }
 
-    fn return_agp(&self) -> String {
-        // preallocate so that it doesn't have to allocate and allocate
-        let mut result = String::with_capacity(self.len() * 32);
-        for (index, item) in self.iter().enumerate() {
-            writeln!(result, "{}. {item}", index + 1).unwrap(); // unwrap() on a String will never fail
-        }
-        result
+        Ok(())
     }
 }
-
-// TODO: add BTreeMap impl (same as HashMap, just swap the type + add doc comments)
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
 
     #[test]
-    fn test_agp_compiles_and_prints() {
-        let mut map = HashMap::new();
-        map.insert("status", "ok");
+    fn test_map_is_valid() {
+        let mut hashmap = HashMap::new();
+        hashmap.insert("key", "value");
+        hashmap.insert("test", "true");
 
-        map.agp();
-    }
-
-    #[test]
-    fn test_empty_map() {
-        let map: HashMap<String, String> = HashMap::new();
-
-        assert_eq!(map.return_agp(), "");
-    }
-
-    #[test]
-    fn test_return_agp_content() {
-        let mut map = HashMap::new();
-        map.insert("status", "ok");
-        map.insert("code", "200");
-
-        let result = map.return_agp();
-
-        assert!(result.contains("status: ok\n"));
-        assert!(result.contains("code: 200\n"));
-
-        let line_count = result.lines().count();
-        assert_eq!(line_count, 2);
-    }
-
-    #[test]
-    fn test_numeric_types() {
-        let mut map = HashMap::new();
-        map.insert(404, 12.5);
-        map.insert(500, 99.9);
-
-        let result = map.return_agp();
-
-        assert!(result.contains("404: 12.5\n"));
-        assert!(result.contains("500: 99.9\n"));
-    }
-
-    #[test]
-    fn test_multiline_values() {
-        let mut map = HashMap::new();
-        map.insert("error", "Line 1\nLine 2");
-
-        let result = map.return_agp();
-
-        assert!(result.contains("error: Line 1\nLine 2\n"));
-    }
-
-    #[test]
-    fn test_large_map_capacity() {
-        let mut map = HashMap::new();
-        for i in 0..1000 {
-            map.insert(i, i * 2);
-        }
-
-        let result = map.return_agp();
-
-        assert_eq!(result.lines().count(), 1000);
-        assert!(result.contains("500: 1000\n"));
-    }
-
-    #[test]
-    fn test_fixed_size_array() {
-        let arr = [10, 20, 30]; // Traditional stack array, not a Vec!
-        let result = arr.return_agp();
-
-        assert_eq!(result, "1. 10\n2. 20\n3. 30\n");
+        assert_eq!(format!("{}", Zilla(&hashmap)), "HashMap:\n    key:  value,\n    test: true,\n");
     }
 }
-

@@ -1,13 +1,13 @@
 [package]
-name = "agp"
-version = "0.3.0"
+name = "formatzilla"
+version = "0.4.0"
 edition = "2024"
-description = "when {:?} fails you, use AGP"
+description = "the killer of formatting"
 license = "GPL-3.0-or-later"
 readme = "README.md"
 keywords = ["hashmap", "print", "debug", "utility", "agp"]
 categories = ["development-tools::debugging"]
-documentation = "https://docs.rs/agp/latest/agp/"
-repository = "https://github.com/IdkWhatAmIDoin/agp"
+documentation = "https://docs.rs/formatzilla/latest/formatzilla/"
+repository = "https://github.com/IdkWhatAmIDoin/formatzilla"
 
 [dependencies]
